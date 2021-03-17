@@ -12,8 +12,7 @@
 
 namespace TEST_NAMESPACE {
 
-template <int dim>
-class kernel;
+template <int dim> class kernel;
 
 static const int globalItems1d = 8;
 static const int globalItems2d = 4;
@@ -30,8 +29,7 @@ static const int groupRangeTotal = (groupItemsTotal / localItemsTotal);
 
 using namespace sycl_cts;
 
-template <int dim>
-void check_dim(util::logger &log) {
+template <int dim> void check_dim(util::logger &log) {
   try {
     int outputData[groupItemsTotal];
     for (int i = 0; i < groupItemsTotal; i++) {
@@ -47,11 +45,11 @@ void check_dim(util::logger &log) {
       myQueue.submit([&](cl::sycl::handler &cgh) {
 
         auto groupRange =
-            sycl_cts::util::get_cts_object::range<dim>::template
-                get_fixed_size<groupRangeTotal>(groupRange1d, groupRange2d);
+            sycl_cts::util::get_cts_object::range<dim>::template get_fixed_size<
+                groupRangeTotal>(groupRange1d, groupRange2d);
         auto localRange =
-            sycl_cts::util::get_cts_object::range<dim>::template
-                get_fixed_size<localItemsTotal>(localItems1d, localItems2d);
+            sycl_cts::util::get_cts_object::range<dim>::template get_fixed_size<
+                localItemsTotal>(localItems1d, localItems2d);
 
         auto outputPtr =
             outputBuffer.get_access<cl::sycl::access::mode::read_write>(cgh);

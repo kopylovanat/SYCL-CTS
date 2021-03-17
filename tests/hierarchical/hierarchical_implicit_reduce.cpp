@@ -30,14 +30,12 @@ static constexpr int inputSize = 59;
 
 using namespace sycl_cts;
 
-template <typename T, int dim>
-class sth {};
+template <typename T, int dim> class sth {};
+
+template <typename T, int dim> class sth_else {};
 
 template <typename T, int dim>
-class sth_else {};
-
-template <typename T, int dim>
-T reduce(T input[inputSize], cl::sycl::device_selector* selector) {
+T reduce(T input[inputSize], cl::sycl::device_selector *selector) {
   T mGroupSums[numGroups];
 
   auto myQueue = util::get_cts_object::queue(*selector);
@@ -52,12 +50,11 @@ T reduce(T input[inputSize], cl::sycl::device_selector* selector) {
     cl::sycl::accessor<T, 1, cl::sycl::access::mode::write,
                        cl::sycl::access::target::global_buffer>
         groupSumsPtr(group_sums_buf, cgh);
-        auto groupRange =
-            sycl_cts::util::get_cts_object::range<dim>::template
-                get_fixed_size<numGroups>(groupItems1d, groupItems2d);
-        auto localRange =
-            sycl_cts::util::get_cts_object::range<dim>::template
-                get_fixed_size<localItemsTotal>(localItems1d, localItems2d);
+    auto groupRange = sycl_cts::util::get_cts_object::range<
+        dim>::template get_fixed_size<numGroups>(groupItems1d, groupItems2d);
+    auto localRange =
+        sycl_cts::util::get_cts_object::range<dim>::template get_fixed_size<
+            localItemsTotal>(localItems1d, localItems2d);
         cgh.parallel_for_work_group<class sth<T, dim>>(
                     groupRange, localRange,
                     [=]( cl::sycl::group<dim> group )
@@ -65,27 +62,28 @@ T reduce(T input[inputSize], cl::sycl::device_selector* selector) {
           T localSums[localItemsTotal];
 
           // process items in each work item
-          group.parallel_for_work_item([=,
-                                        &localSums](cl::sycl::h_item<dim> item) {
-            int globalId = item.get_global().get_linear_id();
-            int localId = item.get_local().get_linear_id();
-            /* Split the array into work-group-size different arrays */
-            int valuesPerItem = (inputSize / globalItemsTotal);
-            valuesPerItem = (valuesPerItem == 0) ? 1 : valuesPerItem;
-            int idStart = valuesPerItem * globalId;
-            int idEnd = valuesPerItem * (globalId + 1);
+          group.parallel_for_work_item(
+              [=, &localSums](cl::sycl::h_item<dim> item) {
+                int globalId = item.get_global().get_linear_id();
+                int localId = item.get_local().get_linear_id();
+                /* Split the array into work-group-size different arrays */
+                int valuesPerItem = (inputSize / globalItemsTotal);
+                valuesPerItem = (valuesPerItem == 0) ? 1 : valuesPerItem;
+                int idStart = valuesPerItem * globalId;
+                int idEnd = valuesPerItem * (globalId + 1);
 
-            /* Handle the case where the number of input values is not divisible
-             * by the number of items. */
-            if (idEnd > inputSize - 1) {
-              idEnd = inputSize;
-            }
+                /* Handle the case where the number of input values is not
+                 * divisible
+                 * by the number of items. */
+                if (idEnd > inputSize - 1) {
+                  idEnd = inputSize;
+                }
 
-            localSums[localId] = T{};
-            for (int i = idStart; i < idEnd; i++) {
-              localSums[localId].increment(input_ptr[i]);
-            }
-          });
+                localSums[localId] = T{};
+                for (int i = idStart; i < idEnd; i++) {
+                  localSums[localId].increment(input_ptr[i]);
+                }
+              });
 
           /* Sum items in each work group */
           int groupId = group.get_linear_id();
@@ -148,8 +146,7 @@ class Multiplier {
   type value;
 };
 
-template <int dim>
-void check_dim(util::logger &log) {
+template <int dim> void check_dim(util::logger &log) {
   try {
       cts_selector sel;
       {
@@ -194,16 +191,16 @@ void check_dim(util::logger &log) {
 /** test cl::sycl::range::get(int index) return size_t
  */
 class TEST_NAME : public util::test_base {
- public:
+public:
   /** return information about this test
    */
-  void get_info(test_base::info& out) const override {
+  void get_info(test_base::info &out) const override {
     set_test_info(out, TOSTRING(TEST_NAME), TEST_FILE);
   }
 
   /** execute the test
    */
-  void run(util::logger& log) override {
+  void run(util::logger &log) override {
     check_dim<1>(log);
     check_dim<2>(log);
     check_dim<3>(log);

@@ -12,13 +12,11 @@
 
 namespace TEST_NAMESPACE {
 
-template <int dim>
-class kernel;
+template <int dim> class kernel;
 
 using namespace sycl_cts;
 
-template <int dim>
-void check_dim(util::logger &log) {
+template <int dim> void check_dim(util::logger &log) {
   try {
     constexpr size_t globalRange1d = 6;
     constexpr size_t globalRange2d = 2;
@@ -30,20 +28,18 @@ void check_dim(util::logger &log) {
     // using this scope we ensure that the buffer will update the host values
     // after the wait_and_throw
     {
-      cl::sycl::buffer<size_t, 1> buf(
-          data.data(), cl::sycl::range<1>(globalRangeTotal));
+      cl::sycl::buffer<size_t, 1> buf(data.data(),
+                                      cl::sycl::range<1>(globalRangeTotal));
 
       myQueue.submit([&](cl::sycl::handler &cgh) {
         auto globalRange =
-            sycl_cts::util::get_cts_object::range<dim>::template
-                get_fixed_size<globalRangeTotal>(globalRange1d, globalRange2d);
-        auto localRange =
-            sycl_cts::util::get_cts_object::range<dim>::get(local, local,
-                                                        local);
+            sycl_cts::util::get_cts_object::range<dim>::template get_fixed_size<
+                globalRangeTotal>(globalRange1d, globalRange2d);
+        auto localRange = sycl_cts::util::get_cts_object::range<dim>::get(
+            local, local, local);
         auto groupRange = globalRange / localRange;
-        auto ptr =
-            buf.get_access<cl::sycl::access::mode::read_write,
-                            cl::sycl::access::target::global_buffer>(cgh);
+        auto ptr = buf.get_access<cl::sycl::access::mode::read_write,
+                                  cl::sycl::access::target::global_buffer>(cgh);
         cgh.parallel_for_work_group<kernel<dim>>(
             groupRange, localRange, [ptr](cl::sycl::group<dim> group_pid) {
               // Assign global linear id to captured varible
@@ -59,8 +55,8 @@ void check_dim(util::logger &log) {
     for (size_t i = 0; i < globalRangeTotal; i++) {
       if (data[i] != i) {
         cl::sycl::string_class errorMessage =
-            cl::sycl::string_class("Value for global id ") +
-            std::to_string(i) + cl::sycl::string_class(" was not correct (") +
+            cl::sycl::string_class("Value for global id ") + std::to_string(i) +
+            cl::sycl::string_class(" was not correct (") +
             std::to_string(data[i]) + cl::sycl::string_class(" instead of ") +
             std::to_string(i);
         FAIL(log, errorMessage);

@@ -12,8 +12,7 @@
 
 namespace TEST_NAMESPACE {
 
-template <int dim>
-class kernel;
+template <int dim> class kernel;
 
 static const size_t globalItems1d = 8;
 static const size_t globalItems2d = 4;
@@ -31,8 +30,7 @@ static const size_t groupRangeTotal = (groupItemsTotal / localItemsTotal);
 
 using namespace sycl_cts;
 
-template <int dim>
-void check_dim(util::logger &log) {
+template <int dim> void check_dim(util::logger &log) {
   try {
     size_t inputData[groupItemsTotal];
 
@@ -48,17 +46,17 @@ void check_dim(util::logger &log) {
       testQueue.submit([&](cl::sycl::handler &cgh) {
 
         auto globalRange =
-            sycl_cts::util::get_cts_object::range<dim>::template
-                get_fixed_size<groupRangeTotal>(groupRange1d, groupRange2d);
+            sycl_cts::util::get_cts_object::range<dim>::template get_fixed_size<
+                groupRangeTotal>(groupRange1d, groupRange2d);
         auto localRange =
-            sycl_cts::util::get_cts_object::range<dim>::template
-                get_fixed_size<localItemsTotal>(localItems1d, localItems2d);
+            sycl_cts::util::get_cts_object::range<dim>::template get_fixed_size<
+                localItemsTotal>(localItems1d, localItems2d);
 
         auto inputPtr =
             input_buffer.get_access<cl::sycl::access::mode::read_write>(cgh);
 
         cl::sycl::accessor<size_t, 1, cl::sycl::access::mode::read_write,
-                            cl::sycl::access::target::local>
+                           cl::sycl::access::target::local>
             localPtr(cl::sycl::range<1>(localItemsTotal), cgh);
 
         cgh.parallel_for_work_group<kernel<dim>>(
@@ -73,7 +71,8 @@ void check_dim(util::logger &log) {
                 localPtr[localId] = invertedVal;
               });
 
-              // Assign inverted val which guaranteed to be already in localPtr due to implicit barrier call
+              // Assign inverted val which guaranteed to be already in localPtr
+              // due to implicit barrier call
               group.parallel_for_work_item([&](cl::sycl::h_item<dim> item) {
                 auto globalId = item.get_global().get_linear_id();
                 auto localId = item.get_local().get_linear_id();
@@ -87,8 +86,7 @@ void check_dim(util::logger &log) {
 
     for (size_t i = 0; i < groupItemsTotal; i++) {
       if (inputData[(groupItemsTotal - 1) - i] != i) {
-        std::cout << i << " : " << inputData[(groupItemsTotal - 1) - i]
-                  << "\n";
+        std::cout << i << " : " << inputData[(groupItemsTotal - 1) - i] << "\n";
         FAIL(log, "Values not equal.");
       }
     }
@@ -104,7 +102,7 @@ void check_dim(util::logger &log) {
 /** test cl::sycl::range::get(int index) return size_t
  */
 class TEST_NAME : public util::test_base {
- public:
+public:
   /** return information about this test
    */
   void get_info(test_base::info &out) const override {
